@@ -15,9 +15,6 @@
     <PackageReference Include="Valsom.Logging.PrettyConsole" Version="0.1.0" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="frontend" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\EliteAPI\EliteAPI.csproj" />
   </ItemGroup>
   <ItemGroup>

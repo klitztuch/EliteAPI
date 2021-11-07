@@ -23,7 +23,7 @@ namespace EliteAPI.Dashboard
             services.AddEliteAPI();
 
             // Add frontend files
-            services.AddSpaStaticFiles(spa => { spa.RootPath = "wwwroot"; });
+            //services.AddSpaStaticFiles(spa => { spa.RootPath = "wwwroot"; });
 
             // Add WebSocket handlers
             services.AddWebSocketHandshake();
@@ -33,7 +33,7 @@ namespace EliteAPI.Dashboard
 
             services.AddHttpClient();
 
-            services.AddElectron();
+            //services.AddElectron();
 
             // Variable service
             services.AddTransient<VariablesService>();
@@ -85,7 +85,7 @@ namespace EliteAPI.Dashboard
                 app.UseDeveloperExceptionPage();
 
             // Redirect to Https
-            app.UseHttpsRedirection();
+            //app.UseHttpsRedirection();
 
             // Allow for CORS   
             app.UseCors();
@@ -95,23 +95,23 @@ namespace EliteAPI.Dashboard
             app.UseWebSocketHandshake();
 
             // Setup the Api
-            app.UseRouting();
+            //app.UseRouting();
             
-            app.UseEndpoints(endpoints =>
-            {
-                endpoints.MapControllers();
-            });
+            // app.UseEndpoints(endpoints =>
+            // {
+            //     endpoints.MapControllers();
+            // });
 
             // Host the frontend
-            app.UseSpaStaticFiles();
-            app.UseSpa(spa =>
-            {
-                spa.Options.SourcePath = "wwwroot";
-
-                // Use localhost instead when developing
-                if (env.IsDevelopment())
-                    spa.UseProxyToSpaDevelopmentServer("http://localhost:8080");
-            });
+            // app.UseSpaStaticFiles();
+            // app.UseSpa(spa =>
+            // {
+            //     spa.Options.SourcePath = "wwwroot";
+            //
+            //     // Use localhost instead when developing
+            //     if (env.IsDevelopment())
+            //         spa.UseProxyToSpaDevelopmentServer("http://localhost:8080");
+            // });
         }
     }
 }
