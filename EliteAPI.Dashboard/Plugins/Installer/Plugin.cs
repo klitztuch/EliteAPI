@@ -29,6 +29,9 @@ namespace EliteAPI.Dashboard.Plugins.Installer
         [JsonProperty("isInstalled")] 
         public bool IsInstalled { get; internal set; } = false;
         
+        [JsonProperty("latestVersion")] 
+        public string LatestVersion { get; internal set; } = "0.0.0";
+        
         [JsonProperty("installedVersion")] 
         public string InstalledVersion { get; internal set; } = "0.0.0";
         

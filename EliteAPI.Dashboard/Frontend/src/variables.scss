@@ -8,3 +8,9 @@ $background-highlight: rgb(46, 51, 56);
 $text: rgb(168, 168, 168);
 $text-accent: white;
 $text-muted: rgb(128, 146, 157);
+
+$accent: rgb(206, 134, 0);
+$accent-light: lighten($accent, 10%);
+
+$danger: rgb(243, 76, 76);
+$success: rgb(76, 243, 98);

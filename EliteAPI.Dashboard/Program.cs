@@ -58,18 +58,20 @@ namespace EliteAPI.Dashboard
             
             foreach (var plugin in await _pluginInstaller.GetPlugins())
             {
+                var profile = UserProfile.Get();
+                
                 // If not already added, add this plugin to the UserProfile
-                if (UserProfile.Get().Plugins.All(x => x.Name != plugin.Name))
+                if (profile.Plugins.All(x => x.Name != plugin.Name))
                 {
-                    var profile = UserProfile.Get();
                     profile.Plugins.Add(plugin);
-                    UserProfile.Set(profile);
                 }
+
+                var index = profile.Plugins.IndexOf(profile.Plugins.First(x => x.Name == plugin.Name));
+                profile.Plugins[index].LatestVersion = (await _pluginInstaller.GetLatestVersion(plugin)).TagName;
+                
+                UserProfile.Set(profile);
             }
             
-            // Send userprofile
-            await _socketHandler.Broadcast(new WebSocketMessage("UserProfile", UserProfile.Get()), true, true);
-
             await _api.StartAsync();
             await host.RunAsync();
         }

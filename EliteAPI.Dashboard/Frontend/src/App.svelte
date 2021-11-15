@@ -1,7 +1,12 @@
 <script>
 	import { onMount } from "svelte";
 	import socket from "./stores/socket";
-	import { connectionState, isConnected, userProfile } from "./stores/stores";
+	import {
+		connectionState,
+		isConnected,
+		userProfile,
+		loadingPlugins,
+	} from "./stores/stores";
 
 	let connectionStateValue;
 	let isConnectedState;
@@ -23,7 +28,6 @@
 		userProfileState = value;
 
 		if (userProfileState.plugins) {
-			console.log("SETTING", userProfileState);
 			installedPlugins = userProfileState.plugins.filter(
 				(x) => x.isInstalled === true
 			);
@@ -33,10 +37,15 @@
 		}
 	});
 
+	loadingPlugins.subscribe((value) => {
+		console.log("loading plugins: ", value);
+	});
+
 	import Header from "./components/Header.svelte";
 	import Loader from "./components/Loader.svelte";
 	import Plugin from "./components/Plugin.svelte";
-import PluginGroup from "./components/PluginGroup.svelte";
+	import PluginGroup from "./components/PluginGroup.svelte";
+	import Spinner from "./components/Spinner.svelte";
 
 	onMount(() => {
 		socket.connect();
@@ -47,8 +56,8 @@ import PluginGroup from "./components/PluginGroup.svelte";
 	<Header />
 	{#if isConnectedState}
 		<div class="plugins">
-			<PluginGroup title="Installed" plugins="{installedPlugins}" />
-			<PluginGroup title="Available" plugins="{availablePlugins}" />
+			<PluginGroup title="Installed" plugins={installedPlugins} />
+			<PluginGroup title="Available" plugins={availablePlugins} />
 		</div>
 	{:else}
 		<div class="body">

@@ -1,4 +1,4 @@
-﻿import {connectionState, isConnected, userProfile} from "./stores";
+﻿import {connectionState, isConnected, userProfile, loadingPlugins, openPlugins} from "./stores";
 
 export default {
     socket: null,
@@ -26,6 +26,26 @@ export default {
 
             if (message.type === "UserProfile") {
                 userProfile.set(message.value);
+            }
+
+            if(message.type == "Plugin.Start") {
+                loadingPlugins.update(e => [...e, message.value]);
+            }
+
+            if(message.type == "Plugin.Finished") {
+                loadingPlugins.update(e => e.filter(x => x !== message.value));
+            }
+
+            if(message.type == "Plugin.Error") {
+                loadingPlugins.update(e => e.filter(x => x !== message.value.value1));
+            }
+
+            if(message.type == "Plugin.Connected") {
+                openPlugins.update(e => [...e, message.value]);
+            }
+
+            if(message.type == "Plugin.Disconnected") {
+                openPlugins.update(e => e.filter(x => x !== message.value));
             }
         }
 
@@ -56,6 +76,9 @@ function send(socket, type, data) {
     };
 
     let compressed = compress(message);
+
+    console.log("Sending", compressed);
+
     socket.send(compressed);
 }
 

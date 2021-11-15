@@ -23,7 +23,11 @@ namespace EliteAPI.Dashboard.Plugins.Installer
         {
             _log = log;
             _client = client;
+
             _client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("EliteAPI", "1.0.0"));
+            
+            // Set the username and password for the HttpClient
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes("Somfic: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")));
         }
 
         public async Task<IList<Plugin>> GetPlugins()
@@ -49,18 +53,33 @@ namespace EliteAPI.Dashboard.Plugins.Installer
             return latest;
         }
         
-        public event EventHandler OnStart;
-        public event EventHandler<float> OnDownloadProgress;
-        public event EventHandler<float> OnInstallProgress;
-        public event EventHandler OnFinished;
-        public event EventHandler<Exception> OnError;
+        public event EventHandler<string> OnStart;
+        public event EventHandler<(string name, float progress)> OnDownloadProgress;
+        public event EventHandler<(string name, float progress)> OnInstallProgress;
+        public event EventHandler<string> OnFinished;
+        public event EventHandler<(string name, Exception exception)> OnError;
+
+        public async Task Uninstall(Plugin plugin)
+        {
+            var path = plugin.InstallationPath;
+            if (Directory.Exists(path))
+                Directory.Delete(path, true);
+            
+            plugin.IsInstalled = false;
+            plugin.InstalledVersion = "0.0.0";
+
+            var profile = UserProfile.Get();
+            var pluginIndex = profile.Plugins.IndexOf(profile.Plugins.First(x => x.Name == plugin.Name));
+            profile.Plugins[pluginIndex] = plugin;
+            UserProfile.Set(profile);
+        }
 
         public async Task<GitHubRelease> Install(Plugin plugin)
         {
             try
             {
                 // Trigger the event
-                OnStart?.Invoke(this, EventArgs.Empty);
+                OnStart?.Invoke(this, plugin.Name);
 
                 // Retrieve the latest version from GitHub using the plugin's repository
                 var latest = await GetLatestVersion(plugin);
@@ -90,7 +109,7 @@ namespace EliteAPI.Dashboard.Plugins.Installer
                     }
 
                     // Trigger the event
-                    OnDownloadProgress?.Invoke(this, (float)index / (latest.Assets.Count));
+                    OnDownloadProgress?.Invoke(this, (plugin.Name, (float)index / (latest.Assets.Count)));
                 }
 
                 // Move the files to the install directory
@@ -105,17 +124,18 @@ namespace EliteAPI.Dashboard.Plugins.Installer
                     File.Copy(file, dest, true);
 
                     // Trigger the event
-                    OnInstallProgress?.Invoke(this, (float)index / (files.Length));
+                    OnInstallProgress?.Invoke(this, (plugin.Name, (float)index / (files.Length)));
                 }
 
                 // Delete the temp directory
                 Directory.Delete(temp, true);
 
                 // Trigger the event
-                OnFinished?.Invoke(this, EventArgs.Empty);
+                OnFinished?.Invoke(this, plugin.Name);
                 
                 plugin.IsInstalled = true;
                 plugin.InstalledVersion = latest.TagName;
+                plugin.LatestVersion = latest.TagName;
                         
                 var profile = UserProfile.Get();
                 var pluginIndex = profile.Plugins.IndexOf(profile.Plugins.First(x => x.Name == plugin.Name));
@@ -129,7 +149,7 @@ namespace EliteAPI.Dashboard.Plugins.Installer
                 _log.LogError(ex, "Failed to install plugin");
                 
                 // Trigger the event
-                OnError?.Invoke(this, ex);
+                OnError?.Invoke(this, (plugin.Name, ex));
 
                 throw;
             }

@@ -21,9 +21,13 @@ namespace EliteAPI.Dashboard
 
         public static UserProfile Get()
         {
-            return File.Exists(SaveFilePath)
+            try {
+                return File.Exists(SaveFilePath)
                 ? JsonConvert.DeserializeObject<UserProfile>(File.ReadAllText(SaveFilePath))
                 : new UserProfile();
+            } catch(Exception) {
+                return new UserProfile();
+            }
         }
 
         public static void Set(UserProfile userProfile)

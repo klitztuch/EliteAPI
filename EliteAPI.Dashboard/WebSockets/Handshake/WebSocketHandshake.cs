@@ -41,8 +41,7 @@ namespace EliteAPI.Dashboard.WebSockets.Handshake
             var isFrontend = protocols.Contains("EliteAPI-app");
             var isPlugin = protocols.Contains("EliteAPI-plugin");
             var isClient = protocols.Contains("EliteAPI");
-
-
+            
             if (isFrontend)
             {
                 // Accept our frontend request

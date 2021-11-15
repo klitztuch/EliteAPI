@@ -48,7 +48,7 @@ namespace EliteAPI.Dashboard.WebSockets.Handler
             
             _pluginInstaller.OnStart += async (sender, e) =>
             {
-                await Broadcast(new WebSocketMessage("Plugin.OnStart", null));
+                await Broadcast(new WebSocketMessage("Plugin.Start", e));
             };
             
             _pluginInstaller.OnDownloadProgress += async (sender, e) =>
@@ -63,12 +63,12 @@ namespace EliteAPI.Dashboard.WebSockets.Handler
 
             _pluginInstaller.OnFinished += async (sender, e) =>
             {
-                await Broadcast(new WebSocketMessage("Plugin.Finished", null));
+                await Broadcast(new WebSocketMessage("Plugin.Finished", e));
             };
             
             _pluginInstaller.OnError += async (sender, e) =>
             {
-                await Broadcast(new WebSocketMessage("EliteVA.Error", e.Message));
+                await Broadcast(new WebSocketMessage("Plugin.Error", e));
             };
 
             _frontendWebSockets = new List<WebSocket>();
@@ -216,99 +216,125 @@ namespace EliteAPI.Dashboard.WebSockets.Handler
 
             List<string> plugins;
             string name = "";
-            
-            while (socket.State == WebSocketState.Open)
-            {
-                // Read message
-                var message = await GetMessage(socket, memory);
-                
-                _log.LogInformation("WebSocket request ({Type}): {Json}", message.Type, message.Value);
 
-                // Check authentication
-                if (!isAuthenticated)
+            try
+            {
+                while (socket.State == WebSocketState.Open)
                 {
-                    _log.LogDebug("Unauthenticated socket, checking authentication");
-                    (isAuthenticated, name) = await CheckAuthentication(message, type);
-                    
-                    if (type == WebSocketType.FrontEnd)
-                    {
-                        foreach (var openPlugin in OpenPlugins)
-                        {
-                            await Broadcast(new WebSocketMessage("Plugin.Connected", openPlugin), WebSocketType.FrontEnd, false, false);
-                        }
-                    }
-                    
-                    // Break connection if still not authenticated
+                    // Read message
+                    var message = await GetMessage(socket, memory);
+
+                    _log.LogInformation("WebSocket request ({Type}): {Json}", message.Type, message.Value);
+
+                    // Check authentication
                     if (!isAuthenticated)
                     {
-                        _log.LogDebug("Did not pass authentication, kicking");
-                        await socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Unauthenticated",
-                            CancellationToken.None);
-                        return;
-                    }
+                        _log.LogDebug("Unauthenticated socket, checking authentication");
+                        (isAuthenticated, name) = await CheckAuthentication(message, type);
 
-                    // Start listening from next message
-                    _log.LogDebug("Passed authentication, sending catchup");
+                        if (type == WebSocketType.FrontEnd)
+                        {
+                            foreach (var openPlugin in OpenPlugins)
+                            {
+                                await Broadcast(new WebSocketMessage("Plugin.Connected", openPlugin), WebSocketType.FrontEnd, false, false);
+                            }
+                        }
 
-                    plugins = OpenPlugins.ToList();
-                    plugins.Add(name);
-                    OpenPlugins = plugins;
-                    
-                    // Send EliteAPI information
-                    await SendTo(socket, new WebSocketMessage("EliteAPI", $"{{\"Version\": \"{_api.Version}\"}}"));
-                    
-                    switch (type)
-                    {
-                        // Send catchup messages to frontend
-                        case WebSocketType.FrontEnd:
-                            await Catchup(socket, _frontendCatchupMessages);
-                            break;
+                        // Break connection if still not authenticated
+                        if (!isAuthenticated)
+                        {
+                            _log.LogDebug("Did not pass authentication, kicking");
+                            await socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Unauthenticated",
+                                CancellationToken.None);
+                            return;
+                        }
 
-                        // Send catchup messages to client
-                        case WebSocketType.Client:
-                            await Catchup(socket, _clientCatchupMessages);
-                            break;
+                        // Start listening from next message
+                        _log.LogDebug("Passed authentication, sending catchup");
+
+                        plugins = OpenPlugins.ToList();
+                        plugins.Add(name);
+                        OpenPlugins = plugins;
+                        await Broadcast(new WebSocketMessage("Plugin.Connected", name), WebSocketType.FrontEnd, false, false);
+
+                        // Send EliteAPI information
+                        await SendTo(socket, new WebSocketMessage("EliteAPI", $"{{\"Version\": \"{_api.Version}\"}}"));
+                        await SendTo(socket, new WebSocketMessage("UserProfile", UserProfile.Get()));
+
                         
-                        // Send catchup messages to client
-                        case WebSocketType.Plugin:
-                            await Catchup(socket, _pluginCatchupMessages);
+                        switch (type)
+                        {
+                            // Send catchup messages to frontend
+                            case WebSocketType.FrontEnd:
+                                await Catchup(socket, _frontendCatchupMessages);
+                                break;
+
+                            // Send catchup messages to client
+                            case WebSocketType.Client:
+                                await Catchup(socket, _clientCatchupMessages);
+                                break;
+
+                            // Send catchup messages to client
+                            case WebSocketType.Plugin:
+                                await Catchup(socket, _pluginCatchupMessages);
+                                break;
+
+                            default:
+                                throw new ArgumentOutOfRangeException(nameof(type), type, "Invalid WebSocket type");
+                        }
+                    }
+
+
+                    // Process message
+                    switch (message.Type.ToLower())
+                    {
+                        case "userprofile.get":
+                            await SendTo(socket, new WebSocketMessage("UserProfile", UserProfile.Get()));
                             break;
 
-                        default:
-                            throw new ArgumentOutOfRangeException(nameof(type), type, "Invalid WebSocket type");
+                        case "userprofile.set":
+                            UserProfile.Set(message.Value);
+                            await SendTo(socket, new WebSocketMessage("UserProfile", UserProfile.Get()));
+                            break;
                     }
-                }
 
-     
-                // Process message
-                switch (message.Type.ToLower())
-                {
-                    case "userprofile.get":
-                        await SendTo(socket, new WebSocketMessage("UserProfile", UserProfile.Get()));
-                        break;
-                    
-                    case "userprofile.set":
-                        UserProfile.Set(message.Value);
-                        await SendTo(socket, new WebSocketMessage("UserProfile", UserProfile.Get()));
-                        break;
-                }
-     
-                // Install plugins
-                foreach (var plugin in await _pluginInstaller.GetPlugins())
-                {
-                    if (message.Type.Equals($"Plugin.Install", StringComparison.InvariantCultureIgnoreCase) && message.Value.Equals(plugin.Name, StringComparison.InvariantCultureIgnoreCase))
+                    // Install & Uninstall plugins
+                    foreach (var plugin in await _pluginInstaller.GetPlugins())
                     {
-                        _log.LogInformation("Installing plugin {Plugin}", plugin.Name);
-                        await _pluginInstaller.Install(plugin);
-                        await Broadcast(new WebSocketMessage("UserProfile", UserProfile.Get()), true);
+                        if (message.Type.Equals($"Plugin.Install", StringComparison.InvariantCultureIgnoreCase) &&
+                            message.Value.Equals(plugin.Name, StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            _log.LogInformation("Installing plugin {Plugin}", plugin.Name);
+                            await _pluginInstaller.Install(plugin);
+                            await Broadcast(new WebSocketMessage("UserProfile", UserProfile.Get()), true);
+                        }
+
+                        if (message.Type.Equals($"Plugin.Uninstall", StringComparison.InvariantCultureIgnoreCase) &&
+                            message.Value.Equals(plugin.Name, StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            _log.LogInformation("Uninstalling plugin {Plugin}", plugin.Name);
+                            await _pluginInstaller.Uninstall(plugin);
+                            await Broadcast(new WebSocketMessage("UserProfile", UserProfile.Get()), true);
+                        }
                     }
+                }
+            } catch(Exception e)
+            {
+                _log.LogWarning(e, "Error processing socket");
+                
+                if (!string.IsNullOrWhiteSpace(name))
+                {
+                    await Broadcast(new WebSocketMessage("Plugin.Disconnected", name), WebSocketType.FrontEnd, false, false);
+                    plugins = OpenPlugins.ToList();
+                    plugins.Remove(name);
+                    OpenPlugins = plugins;
                 }
             }
 
 
             if (!string.IsNullOrWhiteSpace(name))
             {
-                await Broadcast(new WebSocketMessage("Plugin.Disconnected", name), WebSocketType.FrontEnd, true, false);
+                await Broadcast(new WebSocketMessage("Plugin.Disconnected", name), WebSocketType.FrontEnd, false, false);
                 plugins = OpenPlugins.ToList();
                 plugins.Remove(name);
                 OpenPlugins = plugins;
