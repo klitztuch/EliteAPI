@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using EliteAPI.Dashboard.Plugins.Installer;
-using Microsoft.Win32;
 using Newtonsoft.Json;
 
 namespace EliteAPI.Dashboard

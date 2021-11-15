@@ -1,5 +1,4 @@
 ﻿using System;
-using System.IO;
 using System.Threading.Tasks;
 using EliteAPI.Dashboard.Logging.File.Formats.Abstractions;
 using Microsoft.Extensions.Logging;

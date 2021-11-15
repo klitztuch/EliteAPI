@@ -1,7 +1,3 @@
-using System;
-using System.Threading.Tasks;
-using ElectronNET.API;
-using ElectronNET.API.Entities;
 using EliteAPI.Dashboard.Plugins.Installer;
 using EliteAPI.Dashboard.WebSockets;
 using EliteAPI.Services.Variables;
