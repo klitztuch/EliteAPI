@@ -22,9 +22,6 @@ namespace EliteAPI.Dashboard
             // Add EliteAPI
             services.AddEliteAPI();
 
-            // Add frontend files
-            //services.AddSpaStaticFiles(spa => { spa.RootPath = "wwwroot"; });
-
             // Add WebSocket handlers
             services.AddWebSocketHandshake();
 
@@ -33,49 +30,10 @@ namespace EliteAPI.Dashboard
 
             services.AddHttpClient();
 
-            //services.AddElectron();
 
             // Variable service
             services.AddTransient<VariablesService>();
             services.AddSingleton<PluginInstaller>();
-
-            Task.Run(async () =>
-            {
-                // Electron.Tray.SetImage("https://github.com/EliteAPI/Icons/blob/main/logo.png?raw=true");
-                // Electron.Tray.SetTitle("EliteAPI");
-                // Electron.Tray.Show("https://github.com/EliteAPI/Icons/blob/main/logo.png?raw=true");
-                // Electron.Tray.SetToolTip("EliteAPI");
-
-                Electron.NativeTheme.SetThemeSource(ThemeSourceMode.Dark);
-
-                var menu = new MenuItem[] {
-                    new MenuItem 
-                    { 
-                        Label = "Test"
-                    },
-                    new MenuItem 
-                    { 
-                        Label = "Exit", 
-                        Click = () => Environment.Exit(0)
-                    }
-                };
-                Electron.Tray.Show("/assets/eliteapi-round.png", menu);
-                Electron.Tray.SetToolTip("EliteAPI Hub");
-                
-                // Electron.Menu.SetApplicationMenu(new List<MenuItem>().ToArray());
-                await Electron.WindowManager.CreateWindowAsync(new BrowserWindowOptions
-                {
-                    ThickFrame = true,
-                    MinHeight = 500,
-                    MinWidth = 800,
-                    Title = "EliteAPI",
-                    TitleBarStyle = TitleBarStyle.hiddenInset,
-                    DarkTheme = true,
-                    BackgroundColor = "#101013",
-                    AutoHideMenuBar = true,
-                    SkipTaskbar = false
-                });
-            });
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

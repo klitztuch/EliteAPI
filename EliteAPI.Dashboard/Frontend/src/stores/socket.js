@@ -8,7 +8,7 @@ export default {
     },
     
     connect() {
-        this.socket = new WebSocket("ws://localhost:5000/ws", 'EliteAPI-app');
+        this.socket = new WebSocket("ws://localhost:51555/ws", 'EliteAPI-app');
         connectionState.set("Connecting to EliteAPI");
         isConnected.set(false);
 

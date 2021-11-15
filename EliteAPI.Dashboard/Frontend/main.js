@@ -94,13 +94,11 @@ app.whenReady().then(() => {
     if (!createWindow()) {
         return;
     }
-
-    let resourcePath = __dirname
-
+    
     if ("ROLLUP_WATCH" in process.env) {
-        console.log('Skipping EliteAPI, in dev mode');
+        console.log('Skipping starting EliteAPI (in dev mode)');
     } else {
-        eliteApi = childProcess.spawn(path.join(resourcePath, "public/eliteapi/EliteAPI.Dashboard.exe"));
+        eliteApi = childProcess.spawn(path.join(process.resourcesPath, "public/eliteapi/EliteAPI.Dashboard.exe"));
 
         eliteApi.stdout.setEncoding('utf-8');
         eliteApi.stdout.on('data', (data) => {

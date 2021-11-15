@@ -121,7 +121,7 @@ namespace EliteAPI.Dashboard
                 .ConfigureAppConfiguration(config => { config.AddIniFile("EliteAPI.ini", true, true); })
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
-                    webBuilder.UseElectron(args);
+                    webBuilder.UseUrls("http://*:51555");
                     webBuilder.UseStartup<Startup>();
                 });
         
