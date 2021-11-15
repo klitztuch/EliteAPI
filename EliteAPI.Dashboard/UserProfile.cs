@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using EliteAPI.Dashboard.Plugins.Installer;
 using Microsoft.Win32;
 using Newtonsoft.Json;
 
@@ -38,17 +40,10 @@ namespace EliteAPI.Dashboard
                 JsonConvert.SerializeObject(JsonConvert.DeserializeObject<UserProfile>(json)));
         }
 
-        public EliteVaProfile EliteVA { get; init; } = new();
+        [JsonProperty("plugins")]
+        public IList<Plugin> Plugins { get; init; } = new List<Plugin>();
 
+        [JsonProperty("firstRun")]
         public bool FirstRun { get; init; } = true;
-    }
-
-    public class EliteVaProfile
-    {
-        public bool IsInstalled { get; set; }
-
-        public string InstalledVersion { get; set; } = "0.0.0";
-
-        public string InstallationDirectory { get; init; } = (string) Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\VoiceAttack.com\VoiceAttack\LastRun", "AppsFolder", "C:\\Program Files (x86)\\VoiceAttack\\Apps");
     }
 }

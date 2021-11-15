@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using Newtonsoft.Json;
 
-namespace EliteAPI.Dashboard.Controllers.EliteVA
+namespace EliteAPI.Dashboard.Plugins.Installer
 {
-    public class GithubVersioningResponse
+    public class GitHubRelease
     {
         [JsonProperty("author")] public AuthorInfo Author { get; set; }
     

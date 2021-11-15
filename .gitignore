@@ -429,3 +429,4 @@ pnpm-debug.log*
 *.sln
 *.sw?
 EliteAPI.Dashboard/wwwroot/
+global.json

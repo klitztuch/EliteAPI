@@ -4,9 +4,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using ElectronNET.API;
 using EliteAPI.Abstractions;
-using EliteAPI.Dashboard.Controllers.EliteVA;
 using EliteAPI.Dashboard.Logging.File;
 using EliteAPI.Dashboard.Logging.WebSockets;
+using EliteAPI.Dashboard.Plugins.Installer;
 using EliteAPI.Dashboard.WebSockets.Handler;
 using EliteAPI.Dashboard.WebSockets.Message;
 using EliteAPI.Services.Variables;
@@ -24,7 +24,7 @@ namespace EliteAPI.Dashboard
         private static WebSocketHandler _socketHandler;
         private static VariablesService _variableService;
         private static ILogger<Program> _log;
-        private static EliteVaInstaller _eliteVaInstaller;
+        private static PluginInstaller _pluginInstaller;
 
         public static async Task Main(string[] args)
         {
@@ -33,7 +33,7 @@ namespace EliteAPI.Dashboard
             _api = host.Services.GetRequiredService<IEliteDangerousApi>();
             _socketHandler = host.Services.GetRequiredService<WebSocketHandler>();
             _variableService = host.Services.GetRequiredService<VariablesService>();
-            _eliteVaInstaller = host.Services.GetRequiredService<EliteVaInstaller>();
+            _pluginInstaller = host.Services.GetRequiredService<PluginInstaller>();
             _log = host.Services.GetRequiredService<ILogger<Program>>();
 
             await _api.InitializeAsync();
@@ -53,13 +53,24 @@ namespace EliteAPI.Dashboard
             
             // Sub to options
             _api.Bindings.OnChange += async (sender, e) => await _socketHandler.Broadcast(new WebSocketMessage("Bindings", RemoveLineEndings(_api.Bindings.ToXml())), true, true);
-
+            
+            // Get plugin information
+            await _socketHandler.Broadcast(new WebSocketMessage("Plugins", await _pluginInstaller.GetPlugins()), true, true);
+            
+            foreach (var plugin in await _pluginInstaller.GetPlugins())
+            {
+                // If not already added, add this plugin to the UserProfile
+                if (UserProfile.Get().Plugins.All(x => x.Name != plugin.Name))
+                {
+                    var profile = UserProfile.Get();
+                    profile.Plugins.Add(plugin);
+                    UserProfile.Set(profile);
+                }
+            }
+            
             // Send userprofile
             await _socketHandler.Broadcast(new WebSocketMessage("UserProfile", UserProfile.Get()), true, true);
-            
-            // Send latest eliteva version
-            await _socketHandler.Broadcast(new WebSocketMessage("EliteVA.Latest", await _eliteVaInstaller.GetLatestVersion()), true, true);
-            
+
             await _api.StartAsync();
             await host.RunAsync();
         }

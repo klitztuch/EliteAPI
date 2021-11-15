@@ -2,7 +2,7 @@ using System;
 using System.Threading.Tasks;
 using ElectronNET.API;
 using ElectronNET.API.Entities;
-using EliteAPI.Dashboard.Controllers.EliteVA;
+using EliteAPI.Dashboard.Plugins.Installer;
 using EliteAPI.Dashboard.WebSockets;
 using EliteAPI.Services.Variables;
 using Microsoft.AspNetCore.Builder;
@@ -37,7 +37,7 @@ namespace EliteAPI.Dashboard
 
             // Variable service
             services.AddTransient<VariablesService>();
-            services.AddSingleton<EliteVaInstaller>();
+            services.AddSingleton<PluginInstaller>();
 
             Task.Run(async () =>
             {
@@ -93,25 +93,6 @@ namespace EliteAPI.Dashboard
             // Allow and handle websockets
             app.UseWebSockets();
             app.UseWebSocketHandshake();
-
-            // Setup the Api
-            //app.UseRouting();
-            
-            // app.UseEndpoints(endpoints =>
-            // {
-            //     endpoints.MapControllers();
-            // });
-
-            // Host the frontend
-            // app.UseSpaStaticFiles();
-            // app.UseSpa(spa =>
-            // {
-            //     spa.Options.SourcePath = "wwwroot";
-            //
-            //     // Use localhost instead when developing
-            //     if (env.IsDevelopment())
-            //         spa.UseProxyToSpaDevelopmentServer("http://localhost:8080");
-            // });
         }
     }
 }

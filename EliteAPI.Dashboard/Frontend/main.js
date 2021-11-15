@@ -1,8 +1,8 @@
-const {app, screen, BrowserWindow, Menu, Tray} = require("electron");
+const { app, screen, BrowserWindow, Menu, Tray } = require("electron");
 const childProcess = require('child_process');
 const config = require('./config')
 const path = require("path");
-const {window} = require("./config");
+const { window } = require("./config");
 
 let mainWindow;
 let eliteApi;
@@ -12,13 +12,6 @@ let currentlyShown = false;
 
 function createWindow() {
     let isNewInstance = app.requestSingleInstanceLock();
-
-    let eliteva = {
-        name: "EliteVA",
-        description: "VoiceAttack plugin",
-        repo: "EliteAPI/EliteVA",
-        icon: ""
-    }
 
     if (!isNewInstance) {
         app.quit();
@@ -105,37 +98,35 @@ app.whenReady().then(() => {
     let resourcePath = __dirname
 
     if ("ROLLUP_WATCH" in process.env) {
-        console.log('dev mode');
+        console.log('Skipping EliteAPI, in dev mode');
     } else {
-        resourcePath = process.resourcesPath;
+        eliteApi = childProcess.spawn(path.join(resourcePath, "public/eliteapi/EliteAPI.Dashboard.exe"));
+
+        eliteApi.stdout.setEncoding('utf-8');
+        eliteApi.stdout.on('data', (data) => {
+            console.log(data.trim());
+        })
+
+        eliteApi.on('close', (error) => {
+            console.warn('Closed: ' + error)
+        })
+
+        eliteApi.on('disconnect', (error) => {
+            console.warn('Disconnected: ' + error)
+        })
+
+        eliteApi.on('error', (error) => {
+            console.error('Error: ' + error)
+        })
+
+        eliteApi.on('exit', (error) => {
+            console.warn('Exit: ' + error)
+        })
+
+        eliteApi.on('message', (error) => {
+            console.warn('Message: ' + error)
+        })
     }
-
-    eliteApi = childProcess.spawn(path.join(resourcePath, "public/eliteapi/EliteAPI.Dashboard.exe"));
-
-    eliteApi.stdout.setEncoding('utf-8');
-    eliteApi.stdout.on('data', (data) => {
-        console.log(data.trim());
-    })
-
-    eliteApi.on('close', (error) => {
-        console.warn('Closed: ' + error)
-    })
-
-    eliteApi.on('disconnect', (error) => {
-        console.warn('Disconnected: ' + error)
-    })
-
-    eliteApi.on('error', (error) => {
-        console.error('Error: ' + error)
-    })
-
-    eliteApi.on('exit', (error) => {
-        console.warn('Exit: ' + error)
-    })
-
-    eliteApi.on('message', (error) => {
-        console.warn('Message: ' + error)
-    })
 });
 
 

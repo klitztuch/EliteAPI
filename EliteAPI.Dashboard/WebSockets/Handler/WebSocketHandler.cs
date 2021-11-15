@@ -2,13 +2,14 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using EliteAPI.Abstractions;
-using EliteAPI.Dashboard.Controllers.EliteVA;
 using EliteAPI.Dashboard.Logging.WebSockets;
+using EliteAPI.Dashboard.Plugins.Installer;
 using EliteAPI.Dashboard.WebSockets.Message;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -26,7 +27,7 @@ namespace EliteAPI.Dashboard.WebSockets.Handler
     {
         private readonly ILogger<WebSocketHandler> _log;
         private readonly IEliteDangerousApi _api;
-        private readonly EliteVaInstaller _eliteVaInstaller;
+        private readonly PluginInstaller _pluginInstaller;
 
         private readonly List<WebSocket> _frontendWebSockets;
         private readonly List<WebSocket> _clientWebSockets;
@@ -36,30 +37,39 @@ namespace EliteAPI.Dashboard.WebSockets.Handler
         private readonly List<WebSocketMessage> _clientCatchupMessages;
         private readonly List<WebSocketMessage> _pluginCatchupMessages;
 
-        public WebSocketHandler(ILogger<WebSocketHandler> log, IEliteDangerousApi api, EliteVaInstaller eliteVaInstaller)
+        public IReadOnlyList<string> OpenPlugins { get; private set; }
+        
+        public WebSocketHandler(ILogger<WebSocketHandler> log, IEliteDangerousApi api, PluginInstaller pluginInstaller)
         {
             _log = log;
             _api = api;
-            _eliteVaInstaller = eliteVaInstaller;
-            _eliteVaInstaller.OnStart += async (sender, e) =>
+            _pluginInstaller = pluginInstaller;
+
+            OpenPlugins = new List<string>();
+            
+            _pluginInstaller.OnStart += async (sender, e) =>
             {
-                await Broadcast(new WebSocketMessage("EliteVA.Start", null));
+                await Broadcast(new WebSocketMessage("Plugin.OnStart", null));
             };
-            _eliteVaInstaller.OnProgress += async (sender, e) =>
+            
+            _pluginInstaller.OnDownloadProgress += async (sender, e) =>
             {
-                await Broadcast(new WebSocketMessage("EliteVA.Progress", e.ProgressPercentage));
+                await Broadcast(new WebSocketMessage("Plugin.Progress.Download", e));
             };
-            _eliteVaInstaller.OnNewTask += async (sender, e) =>
+            
+            _pluginInstaller.OnInstallProgress += async (sender, e) =>
             {
-                await Broadcast(new WebSocketMessage("EliteVA.Task", e));
+                await Broadcast(new WebSocketMessage("Plugin.Progress.Install", e));
             };
-            _eliteVaInstaller.OnFinished += async (sender, e) =>
+
+            _pluginInstaller.OnFinished += async (sender, e) =>
             {
-                await Broadcast(new WebSocketMessage("EliteVA.Finished", null));
+                await Broadcast(new WebSocketMessage("Plugin.Finished", null));
             };
-            _eliteVaInstaller.OnError += async (sender, e) =>
+            
+            _pluginInstaller.OnError += async (sender, e) =>
             {
-                await Broadcast(new WebSocketMessage("EliteVA.Error", e));
+                await Broadcast(new WebSocketMessage("EliteVA.Error", e.Message));
             };
 
             _frontendWebSockets = new List<WebSocket>();
@@ -205,6 +215,9 @@ namespace EliteAPI.Dashboard.WebSockets.Handler
             await using var memory = new MemoryStream();
             bool isAuthenticated = false;
 
+            List<string> plugins;
+            string name = "";
+            
             while (socket.State == WebSocketState.Open)
             {
                 // Read message
@@ -216,8 +229,16 @@ namespace EliteAPI.Dashboard.WebSockets.Handler
                 if (!isAuthenticated)
                 {
                     _log.LogDebug("Unauthenticated socket, checking authentication");
-                    isAuthenticated = await CheckAuthentication(message, type);
-
+                    (isAuthenticated, name) = await CheckAuthentication(message, type);
+                    
+                    if (type == WebSocketType.FrontEnd)
+                    {
+                        foreach (var openPlugin in OpenPlugins)
+                        {
+                            await Broadcast(new WebSocketMessage("Plugin.Connected", openPlugin), WebSocketType.FrontEnd, false, false);
+                        }
+                    }
+                    
                     // Break connection if still not authenticated
                     if (!isAuthenticated)
                     {
@@ -230,6 +251,10 @@ namespace EliteAPI.Dashboard.WebSockets.Handler
                     // Start listening from next message
                     _log.LogDebug("Passed authentication, sending catchup");
 
+                    plugins = OpenPlugins.ToList();
+                    plugins.Add(name);
+                    OpenPlugins = plugins;
+                    
                     // Send EliteAPI information
                     await SendTo(socket, new WebSocketMessage("EliteAPI", $"{{\"Version\": \"{_api.Version}\"}}"));
                     
@@ -267,17 +292,27 @@ namespace EliteAPI.Dashboard.WebSockets.Handler
                         UserProfile.Set(message.Value);
                         await SendTo(socket, new WebSocketMessage("UserProfile", UserProfile.Get()));
                         break;
-                    
-                    case "eliteva.install":
-                        Process.Start("taskkill", "/F /IM voiceattack.exe");
-                        await _eliteVaInstaller.DownloadLatestVersion();
-                        await SendTo(socket, new WebSocketMessage("UserProfile", UserProfile.Get()));
-                        break;
-                    
-                    case "eliteva.latest":
-                        await SendTo(socket, new WebSocketMessage("EliteVA.Latest", await _eliteVaInstaller.GetLatestVersion()));
-                        break;
                 }
+     
+                // Install plugins
+                foreach (var plugin in await _pluginInstaller.GetPlugins())
+                {
+                    if (message.Type.Equals($"Plugin.Install", StringComparison.InvariantCultureIgnoreCase) && message.Value.Equals(plugin.Name, StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        _log.LogInformation("Installing plugin {Plugin}", plugin.Name);
+                        await _pluginInstaller.Install(plugin);
+                        await Broadcast(new WebSocketMessage("UserProfile", UserProfile.Get()), true);
+                    }
+                }
+            }
+
+
+            if (!string.IsNullOrWhiteSpace(name))
+            {
+                await Broadcast(new WebSocketMessage("Plugin.Disconnected", name), WebSocketType.FrontEnd, true, false);
+                plugins = OpenPlugins.ToList();
+                plugins.Remove(name);
+                OpenPlugins = plugins;
             }
         }
 
@@ -292,15 +327,17 @@ namespace EliteAPI.Dashboard.WebSockets.Handler
             await SendTo(socket, new WebSocketMessage("CatchupEnd"));
         }
 
-        private Task<bool> CheckAuthentication(WebSocketMessage message, WebSocketType type)
+        private Task<(bool success, string name)> CheckAuthentication(WebSocketMessage message, WebSocketType type)
         {
+            // Type must be auth
             if (!string.Equals(message.Type, "auth", StringComparison.InvariantCultureIgnoreCase))
-                return Task.FromResult(false);
+                return Task.FromResult((false, ""));
 
-            if (!string.Equals(message.Value, type.ToString(), StringComparison.InvariantCultureIgnoreCase))
-                return Task.FromResult(false);
-
-            return Task.FromResult(true);
+            // Value must the unique plugin name
+            if(type == WebSocketType.Plugin && OpenPlugins.Contains(message.Value, StringComparer.InvariantCultureIgnoreCase))
+                return Task.FromResult((false, ""));
+            
+            return Task.FromResult((true, message.Value));
         }
 
         private async Task<WebSocketMessage> GetMessage(WebSocket socket, MemoryStream memory)

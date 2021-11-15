@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "author": "Somfic",
   "private": true,
+  "description": "EliteAPI Dashboard",
   "main": "main.js",
   "scripts": {
     "build": "rollup -c",

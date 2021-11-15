@@ -19,7 +19,7 @@ namespace EliteAPI.Options.Processor
         private readonly IDictionary<string, string> _cache;
         private readonly ILogger<OptionsProcessor> _log;
         private readonly IBindings _bindings;
-        private readonly IFileReader _fileReader;
+        private readonly IFileReader _fileReader;  
 
         public OptionsProcessor(ILogger<OptionsProcessor> log, IBindings bindings, IFileReader fileReader)
         {
