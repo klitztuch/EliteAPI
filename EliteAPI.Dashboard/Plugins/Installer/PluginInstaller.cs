@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
@@ -19,15 +20,12 @@ namespace EliteAPI.Dashboard.Plugins.Installer
         private IList<Plugin> _plugins;
         private const string Repositories = "https://github.com/EliteAPI/Repositories/raw/main/plugins.json";
         
-        public PluginInstaller(ILogger<PluginInstaller> log, HttpClient client)
+        public PluginInstaller(ILogger<PluginInstaller> log, IHttpClientFactory clientFactory)
         {
             _log = log;
-            _client = client;
+            _client = clientFactory.CreateClient();
 
-            _client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("EliteAPI", "1.0.0"));
-            
-            // Set the username and password for the HttpClient
-            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes("Somfic: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")));
+            _client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("EliteAPI", "1.0.0"));   
         }
 
         public async Task<IList<Plugin>> GetPlugins()

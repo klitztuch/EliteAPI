@@ -22,4 +22,41 @@
   <ItemGroup>
     <Folder Include="Frontend" />
   </ItemGroup>
+  <ItemGroup>
+    <_ContentIncludedByDefault Remove="Frontend\public\eliteapi\appsettings.json" />
+    <_ContentIncludedByDefault Remove="Frontend\public\eliteapi\EliteAPI.Dashboard.deps.json" />
+    <_ContentIncludedByDefault Remove="Frontend\public\eliteapi\EliteAPI.Dashboard.runtimeconfig.dev.json" />
+    <_ContentIncludedByDefault Remove="Frontend\public\eliteapi\EliteAPI.Dashboard.runtimeconfig.json" />
+    <_ContentIncludedByDefault Remove="Frontend\public\eliteapi\Frontend\dist\win-unpacked\resources\public\eliteapi\appsettings.json" />
+    <_ContentIncludedByDefault Remove="Frontend\public\eliteapi\Frontend\dist\win-unpacked\resources\public\eliteapi\EliteAPI.Dashboard.deps.json" />
+    <_ContentIncludedByDefault Remove="Frontend\public\eliteapi\Frontend\dist\win-unpacked\resources\public\eliteapi\EliteAPI.Dashboard.runtimeconfig.dev.json" />
+    <_ContentIncludedByDefault Remove="Frontend\public\eliteapi\Frontend\dist\win-unpacked\resources\public\eliteapi\EliteAPI.Dashboard.runtimeconfig.json" />
+    <_ContentIncludedByDefault Remove="Frontend\public\eliteapi\Frontend\dist\win-unpacked\resources\public\eliteapi\Frontend\dist\win-unpacked\resources\public\eliteapi\appsettings.json" />
+    <_ContentIncludedByDefault Remove="Frontend\public\eliteapi\Frontend\dist\win-unpacked\resources\public\eliteapi\Frontend\dist\win-unpacked\resources\public\eliteapi\EliteAPI.Dashboard.deps.json" />
+    <_ContentIncludedByDefault Remove="Frontend\public\eliteapi\Frontend\dist\win-unpacked\resources\public\eliteapi\Frontend\dist\win-unpacked\resources\public\eliteapi\EliteAPI.Dashboard.runtimeconfig.dev.json" />
+    <_ContentIncludedByDefault Remove="Frontend\public\eliteapi\Frontend\dist\win-unpacked\resources\public\eliteapi\Frontend\dist\win-unpacked\resources\public\eliteapi\EliteAPI.Dashboard.runtimeconfig.json" />
+    <_ContentIncludedByDefault Remove="Frontend\public\eliteapi\Frontend\dist\win-unpacked\resources\public\eliteapi\Frontend\dist\win-unpacked\resources\public\eliteapi\EliteAPI.deps.json" />
+    <_ContentIncludedByDefault Remove="Frontend\public\eliteapi\Frontend\dist\win-unpacked\resources\public\eliteapi\Frontend\dist\win-unpacked\resources\public\eliteapi\Frontend\package-lock.json" />
+    <_ContentIncludedByDefault Remove="Frontend\public\eliteapi\Frontend\dist\win-unpacked\resources\public\eliteapi\Frontend\dist\win-unpacked\resources\public\eliteapi\Frontend\package.json" />
+    <_ContentIncludedByDefault Remove="Frontend\public\eliteapi\Frontend\dist\win-unpacked\resources\public\eliteapi\Frontend\dist\win-unpacked\vk_swiftshader_icd.json" />
+    <_ContentIncludedByDefault Remove="Frontend\public\eliteapi\Frontend\dist\win-unpacked\resources\public\eliteapi\Frontend\package-lock.json" />
+    <_ContentIncludedByDefault Remove="Frontend\public\eliteapi\Frontend\dist\win-unpacked\resources\public\eliteapi\Frontend\package.json" />
+    <_ContentIncludedByDefault Remove="Frontend\public\eliteapi\Frontend\dist\win-unpacked\vk_swiftshader_icd.json" />
+    <_ContentIncludedByDefault Remove="Frontend\public\eliteapi\Frontend\package-lock.json" />
+    <_ContentIncludedByDefault Remove="Frontend\public\eliteapi\Frontend\package.json" />
+    <_ContentIncludedByDefault Remove="Frontend\public\eliteapi\Frontend\public\eliteapi\appsettings.json" />
+    <_ContentIncludedByDefault Remove="Frontend\public\eliteapi\Frontend\public\eliteapi\EliteAPI.Dashboard.deps.json" />
+    <_ContentIncludedByDefault Remove="Frontend\public\eliteapi\Frontend\public\eliteapi\EliteAPI.Dashboard.runtimeconfig.dev.json" />
+    <_ContentIncludedByDefault Remove="Frontend\public\eliteapi\Frontend\public\eliteapi\EliteAPI.Dashboard.runtimeconfig.json" />
+    <_ContentIncludedByDefault Remove="Frontend\public\eliteapi\Frontend\public\eliteapi\Frontend\dist\win-unpacked\resources\public\eliteapi\appsettings.json" />
+    <_ContentIncludedByDefault Remove="Frontend\public\eliteapi\Frontend\public\eliteapi\Frontend\dist\win-unpacked\resources\public\eliteapi\EliteAPI.Dashboard.deps.json" />
+    <_ContentIncludedByDefault Remove="Frontend\public\eliteapi\Frontend\public\eliteapi\Frontend\dist\win-unpacked\resources\public\eliteapi\EliteAPI.Dashboard.runtimeconfig.dev.json" />
+    <_ContentIncludedByDefault Remove="Frontend\public\eliteapi\Frontend\public\eliteapi\Frontend\dist\win-unpacked\resources\public\eliteapi\EliteAPI.Dashboard.runtimeconfig.json" />
+    <_ContentIncludedByDefault Remove="Frontend\public\eliteapi\Frontend\public\eliteapi\Frontend\dist\win-unpacked\resources\public\eliteapi\EliteAPI.deps.json" />
+    <_ContentIncludedByDefault Remove="Frontend\public\eliteapi\Frontend\public\eliteapi\Frontend\dist\win-unpacked\resources\public\eliteapi\Frontend\package-lock.json" />
+    <_ContentIncludedByDefault Remove="Frontend\public\eliteapi\Frontend\public\eliteapi\Frontend\dist\win-unpacked\resources\public\eliteapi\Frontend\package.json" />
+    <_ContentIncludedByDefault Remove="Frontend\public\eliteapi\Frontend\public\eliteapi\Frontend\dist\win-unpacked\vk_swiftshader_icd.json" />
+    <_ContentIncludedByDefault Remove="Frontend\public\eliteapi\Frontend\public\eliteapi\Frontend\package-lock.json" />
+    <_ContentIncludedByDefault Remove="Frontend\public\eliteapi\Frontend\public\eliteapi\Frontend\package.json" />
+  </ItemGroup>
 </Project>
