@@ -1,13 +1,15 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-
+using EliteAPI.Compatibility.Proton.Abstractions;
 using EliteAPI.Configuration.Abstractions;
 using EliteAPI.Exceptions;
 using EliteAPI.Journal.Directory.Abstractions;
 using EliteAPI.Journal.Provider;
-
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -17,15 +19,17 @@ namespace EliteAPI.Journal.Directory
     /// <inheritdoc />
     public class JournalDirectoryProvider : IJournalDirectoryProvider
     {
-        private readonly IConfiguration _config;
-        private readonly ILogger<JournalProvider> _log;
         private readonly IEliteDangerousApiConfiguration _codeConfig;
+        private readonly IConfiguration _config;
+        private readonly IProtonProvider _protonProvider;
+        private readonly ILogger<JournalProvider> _log;
 
         public JournalDirectoryProvider(IServiceProvider services)
         {
             _log = services.GetRequiredService<ILogger<JournalProvider>>();
             _config = services.GetRequiredService<IConfiguration>();
             _codeConfig = services.GetRequiredService<IEliteDangerousApiConfiguration>();
+            _protonProvider = services.GetRequiredService<IProtonProvider>();
         }
 
         /// <inheritdoc />
@@ -38,12 +42,14 @@ namespace EliteAPI.Journal.Directory
             var exception = CheckDirectoryValidity(configDirectory);
             if (exception == null) return Task.FromResult(configDirectory);
 
-            if (!(exception is NullReferenceException)) _log.LogDebug(exception, "The journal directory provided by the file configuration is invalid");
+            if (!(exception is NullReferenceException))
+                _log.LogDebug(exception, "The journal directory provided by the file configuration is invalid");
 
             exception = CheckDirectoryValidity(codeConfigDirectory);
-            if (exception == null) { return Task.FromResult(codeConfigDirectory); }
+            if (exception == null) return Task.FromResult(codeConfigDirectory);
 
-            if (!(exception is NullReferenceException)) _log.LogDebug(exception, "The journal directory provided by the code configuration is invalid");
+            if (!(exception is NullReferenceException))
+                _log.LogDebug(exception, "The journal directory provided by the code configuration is invalid");
 
 
             if (configDirectory?.FullName != defaultDirectory.FullName)
@@ -86,7 +92,11 @@ namespace EliteAPI.Journal.Directory
 
         private DirectoryInfo GetDefaultDirectory()
         {
-            try { return new DirectoryInfo(Path.Combine(GetSavedGamesDirectory(), "Frontier Developments/Elite Dangerous")); }
+            try
+            {
+                return new DirectoryInfo(
+                    Path.Combine(GetSavedGamesDirectory(), "Frontier Developments/Elite Dangerous"));
+            }
             catch (Exception ex)
             {
                 _log.LogTrace(ex, "Could not get default journal directory");
@@ -96,7 +106,12 @@ namespace EliteAPI.Journal.Directory
 
         private DirectoryInfo GetCodeConfigDirectory()
         {
-            try { return !string.IsNullOrWhiteSpace(_codeConfig.JournalPath) ? new DirectoryInfo(_codeConfig.JournalPath) : null; }
+            try
+            {
+                return !string.IsNullOrWhiteSpace(_codeConfig.JournalPath)
+                    ? new DirectoryInfo(_codeConfig.JournalPath)
+                    : null;
+            }
             catch (Exception ex)
             {
                 _log.LogTrace(ex, "Could not get config journal directory");
@@ -129,6 +144,18 @@ namespace EliteAPI.Journal.Directory
                         out var path);
                     if (result > 0) return Marshal.PtrToStringUni(path);
                 }
+                else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                {
+                    const string protonUserProfile =
+                        @"steamapps/compatdata/359320/pfx/drive_c/users/steamuser/Saved Games/";
+                    var libraryLocations = _protonProvider.GetSteamLibraryLocations();
+                    foreach (var libraryLocation in libraryLocations)
+                    {
+                        var savedGameDirectory = Path.Combine(libraryLocation, protonUserProfile);
+                        if (System.IO.Directory.Exists(savedGameDirectory)) return savedGameDirectory;
+                    }
+                }
+
 
                 var userProfile = Environment.GetEnvironmentVariable("USERPROFILE");
                 if (!string.IsNullOrWhiteSpace(userProfile)) return Path.Combine(userProfile, "Saved Games");
@@ -143,8 +170,7 @@ namespace EliteAPI.Journal.Directory
         }
 
         [DllImport("Shell32.dll")]
-        private static extern int SHGetKnownFolderPath([MarshalAs(UnmanagedType.LPStruct)]
-            Guid rfid, uint dwFlags,
+        private static extern int SHGetKnownFolderPath([MarshalAs(UnmanagedType.LPStruct)] Guid rfid, uint dwFlags,
             IntPtr hToken, out IntPtr ppszPath);
     }
 }

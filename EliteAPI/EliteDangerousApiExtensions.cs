@@ -1,6 +1,7 @@
 ﻿using System;
-
 using EliteAPI.Abstractions;
+using EliteAPI.Compatibility.Proton;
+using EliteAPI.Compatibility.Proton.Abstractions;
 using EliteAPI.Configuration;
 using EliteAPI.Event.Provider;
 using EliteAPI.Event.Provider.Abstractions;
@@ -44,18 +45,19 @@ using EliteAPI.Status.Ship.Abstractions;
 using EliteAPI.Status.Shipyard;
 using EliteAPI.Status.Shipyard.Abstractions;
 using Microsoft.Extensions.DependencyInjection;
-
 using EventHandler = EliteAPI.Event.Handler.EventHandler;
 
 namespace EliteAPI
 {
     [Obsolete("Use EliteDangerousApiExtensions instead", true)]
-    public static class EliteDangerousAPIExtensions { }
+    public static class EliteDangerousAPIExtensions
+    {
+    }
 
     public static class EliteDangerousApiExtensions
     {
         /// <summary>
-        /// Adds all EliteAPI's necessary services to the <seealso cref="IServiceCollection" />
+        ///     Adds all EliteAPI's necessary services to the <seealso cref="IServiceCollection" />
         /// </summary>
         public static IServiceCollection AddEliteAPI(this IServiceCollection services,
             Action<EliteDangerousApiConfigurationBuilder> configuration = null)
@@ -96,6 +98,7 @@ namespace EliteAPI
             // Util
             services.AddTransient<IFileReader, FileReader>();
             services.AddTransient<VariablesService>();
+            services.AddTransient<IProtonProvider, ProtonProvider>();
 
             return services;
         }

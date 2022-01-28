@@ -124,6 +124,23 @@
             Generates this objects's Json
             </summary>
         </member>
+        <member name="T:EliteAPI.Compatibility.Proton.Abstractions.IProtonProvider">
+            <summary>
+            Provides functionality for proton specific game options.
+            </summary>
+        </member>
+        <member name="M:EliteAPI.Compatibility.Proton.Abstractions.IProtonProvider.GetSteamLibraryLocations">
+            <summary>
+                Gets the steam library locations
+            </summary>
+            <returns>Library locations</returns>
+        </member>
+        <member name="T:EliteAPI.Compatibility.Proton.ProtonProvider">
+            <inheritdoc />
+        </member>
+        <member name="M:EliteAPI.Compatibility.Proton.ProtonProvider.GetSteamLibraryLocations">
+            <inheritdoc />
+        </member>
         <member name="T:EliteAPI.Configuration.Abstractions.IEliteDangerousApiConfiguration">
             <summary>
             Interface for the <see cref="T:EliteAPI.Configuration.Abstractions.IEliteDangerousApiConfiguration" /> configuration class
@@ -329,7 +346,7 @@
         </member>
         <member name="M:EliteAPI.EliteDangerousApiExtensions.AddEliteAPI(Microsoft.Extensions.DependencyInjection.IServiceCollection,System.Action{EliteAPI.Configuration.EliteDangerousApiConfigurationBuilder})">
             <summary>
-            Adds all EliteAPI's necessary services to the <seealso cref="T:Microsoft.Extensions.DependencyInjection.IServiceCollection" />
+                Adds all EliteAPI's necessary services to the <seealso cref="T:Microsoft.Extensions.DependencyInjection.IServiceCollection" />
             </summary>
         </member>
         <member name="T:EliteAPI.Event.Attributes.EliteDangerousEventAttribute">
